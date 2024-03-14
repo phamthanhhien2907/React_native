@@ -8,28 +8,30 @@ import {
   TouchableOpacity,
   Modal,
   SafeAreaView,
-  TextInput
-} from "react-native";
-import Task from "./components/Task";
-import styles from "./App.components.style";
-import Form from "./components/Form";
+  KeyboardAvoidingView,
+  Platform,
+  TextInput,
+  Keyboard
 
-const App = () => {
-  const [taskList, settaskList] = useState([]);
+} from "react-native";
+import styles from "./App.components.style";
+import { MaterialIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
+const App = (FaBeer) => {
   const [list, setList] = useState([]);
   const [modal, setModal] = useState(false);
   const [name, setName] = useState("");
-  const [position, setPosition] = useState("");
-  const [department, setDepartment] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
+ 
   const [id, setId] = useState(null);
-  
+  const [data, setData] = useState([]);
+  const [modalSearch, setModalSearch] = useState(false);
+  const [modalEdit, setModalEdit] = useState(false)
 
 
   useEffect(() => {
-    getListEmployees();
+    getListEmployees()
   }, []);
+
   const getListEmployees = () => {
     fetch("https://server-react-native-brrx.onrender.com/api/employees", {
       method: "GET",
@@ -38,7 +40,7 @@ const App = () => {
         return res.json();
       })
       .then((res) => {
-        if (res) setList(res.productDatas);
+        if (res) setList(res.products);
         console.log(res);
       })
       .catch((error) => {
@@ -50,20 +52,20 @@ const App = () => {
     settaskList([...taskList, task]);
   };
   const handleDeleteTask = (id) => {
-    
-    
+
+
 
     Alert.alert("Thông báo", "Bạn có chắc chắn muốn xóa", [
       {
         text: "Ok",
         onPress: () => {
           const url = "https://server-react-native-brrx.onrender.com/api/employees";
-          fetch(`${url}/${id}` , {
+          fetch(`${url}/${id}`, {
             method: "DELETE",
             headers: {
               "Accept": "application/json",
               "Content-Type": "application/json",
-              
+
             },
           })
             .then((res) => {
@@ -71,7 +73,7 @@ const App = () => {
             })
             .then((res) => {
               console.log(res);
-      
+
               getListEmployees();
             })
             .catch((error) => {
@@ -79,193 +81,262 @@ const App = () => {
             });
         },
       },
-      { text: "cancel", onPress: () => {} },
+      { text: "cancel", onPress: () => { } },
     ]);
   };
   const handleCreate = () => {
+    clearForm()
     setModal(true)
   }
   const handleClose = () => {
     setModal(false)
+    setModalEdit(false)
   }
+  
   const handleSave = () => {
-   if(id === null) {
-    fetch("https://server-react-native-brrx.onrender.com/api/employees", {
-      method: "POST",
-      body : JSON.stringify({
-        "name" : name,
-        "position" : position,
-        "department" : department,
-        "email" : email,
-        "phone" : phone
-        
-      }),
-      headers: {
-        "Accept": "application/json",
-        "Content-Type": "application/json",
-      },
-    })
-      .then((res) => {
-        return res.json();
+    if (id === null) {
+      fetch("https://server-react-native-brrx.onrender.com/api/employees", {
+        method: "POST",
+        body: JSON.stringify({
+          "name": name,
+         
+
+        }),
+        headers: {
+          "Accept": "application/json",
+          "Content-Type": "application/json",
+        },
       })
-      .then((res) => {
-        console.log(res);
-      
-        getListEmployees();
-        setModal(false)
-        clearForm()
+        .then((res) => {
+          return res.json();
+        })
+        .then((res) => {
+          console.log(res);
+
+          getListEmployees();
+          setModal(false)
+          clearForm()
+        })
+        .catch((error) => {
+          console.log(error);
+        });
+    } else {
+      const url = "https://server-react-native-brrx.onrender.com/api/employees";
+      fetch(`${url}/${id}`, {
+        method: "PUT",
+        body: JSON.stringify({
+          "name": name,
+         
+
+        }),
+        headers: {
+          "Accept": "application/json",
+          "Content-Type": "application/json",
+        },
       })
-      .catch((error) => {
-        console.log(error);
-      });
-   }else {
-    const url = "https://server-react-native-brrx.onrender.com/api/employees";
-    fetch(`${url}/${id}`, {
-      method: "PUT",
-      body : JSON.stringify({
-        "name" : name,
-        "position" : position,
-        "department" : department,
-        "email" : email,
-        "phone" : phone
-        
-      }),
-      headers: {
-        "Accept": "application/json",
-        "Content-Type": "application/json",
-      },
-    })
-      .then((res) => {
-        return res.json();
-      })
-      .then((res) => {
-        console.log(res);
-      
-        getListEmployees();
-        setModal(false)
-        clearForm()
-      })
-      .catch((error) => {
-        console.log(error);
-      });
-   }
+        .then((res) => {
+          return res.json();
+        })
+        .then((res) => {
+          console.log(res);
+
+          getListEmployees();
+          setModalEdit(false)
+          clearForm()
+        })
+        .catch((error) => {
+          console.log(error);
+        });
+    }
   }
   const clearForm = () => {
     setName("")
-    setEmail("")
-    setDepartment("")
-    setPosition("")
-    setPhone("")
+   
     setId(null)
   }
-  const handleEdit =  (item) => {
+  const handleEdit = (item) => {
     setName(item.name)
-    setEmail(item.emaiil)
-    setDepartment(item.department)
-    setPosition(item.position)
-    setPhone(item.phone)
+  
     setId(item._id)
-    setModal(true)
-    alert(item._id)
-
+    setModalEdit(true)
   }
+  
   return (
     <View style={styles.container}>
       <View style={styles.body}>
-      <Modal visible={modal}>
-      <View style={styles.container} >
-      <View style={styles.body}>
-        <View style={css.rowBetween}>
-          <Text style={styles.header}>
-            Create Employees
-          </Text>
-          <TouchableOpacity onPress={handleClose} style={styles.header}>
-          <Text style={css.center} >Close</Text>
-        </TouchableOpacity>
-        </View>
-          <Text>Họ và tên</Text>
-          <TextInput value={name} onChangeText={(text) => {
-            setName(text)
-          }} style={css.TextInput} />
-          <Text>Vị trí</Text>
-          <TextInput  value={position} onChangeText={(text) => {
-            setPosition(text)
-          }} style={css.TextInput} />
-          <Text>Phòng ban</Text>
-          <TextInput value={department} onChangeText={(text) => {
-            setDepartment(text)
-          }} style={css.TextInput} />
-          <Text>Email</Text>
-          <TextInput value={email} onChangeText={(text) => {
-            setEmail(text)
-          }} style={css.TextInput} />
-          <Text>Số điện thoại</Text>
-          <TextInput  value={phone} onChangeText={(text) => {
-            setPhone(text)
-          }} style={css.TextInput} />
-          <TouchableOpacity onPress={handleSave} style={styles.header}>
-              <Text  style={css.center}>Save</Text>
-          </TouchableOpacity>
-          </View>
+        <KeyboardAvoidingView keyboardVerticalOffset={10}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.container}>
+          <Modal visible={modal}>
+            <View style={styles.container} >
+              <View style={styles.body}>
+                <TouchableOpacity onPress={ handleClose} style={[styles.header, styles.iconCss]}>
+                  <Text style={css.first}><Ionicons name="exit-outline" size={36} color="black" /></Text>
+                </TouchableOpacity>
+                <View  >
+                  <Text  style={styles.header}>
+                    Tạo ghi chú
+                  </Text>
 
-          </View>
-        </Modal>
-        <View style={css.rowBetween}>
-        <Text style={styles.header}>Todo List</Text>
-        <TouchableOpacity onPress={handleCreate} style={styles.header}>
-          <Text  style={css.center}>Create</Text>
-        </TouchableOpacity>
-        </View>
-       
-        
-        <ScrollView style={styles.items}>
-          {list.map((item) => {
-            return (
-              <View style={css.rowBetween}>
-                <View key={item._id}>
-                  <Text>{item.name}</Text>
                 </View>
+                <Text style={css.overview}>Nội dung ghi chú</Text>
+                <TextInput multiline={true} value={name} onChangeText={(text) => {
+                  setName(text)
+                }} style={css.TextInput} />
+               
+                <TouchableOpacity onPress={handleSave} style={styles.header}>
+                  <Text style={[css.center, css.khongbietnua]}>Lưu</Text>
+                </TouchableOpacity>
+              </View>
+
+            </View>
+          </Modal>
+        </KeyboardAvoidingView>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.container}>
+          <Modal visible={modalEdit}>
+            <View style={styles.container} >
+              <View style={styles.body}>
+                <TouchableOpacity onPress={handleClose} style={[styles.header, styles.iconCss]}>
+                  <Text style={css.first}><Ionicons name="exit-outline" size={36} color="black" /></Text>
+                </TouchableOpacity>
+                <View  >
+                  <Text style={styles.header}>
+                    Sửa ghi chú
+                  </Text>
+
+                </View>
+                <Text style={css.overview}>Nội dung ghi chú</Text>
+                <TextInput multiline={true} value={name} onChangeText={(text) => {
+                  setName(text)
+                }} style={css.TextInput} />
+               
+                <TouchableOpacity onPress={handleSave} style={styles.header}>
+                  <Text style={[css.center, css.khongbietnua]}>Save</Text>
+                </TouchableOpacity>
+              </View>
+
+            </View>
+          </Modal>
+        </KeyboardAvoidingView>
+        <Text style={styles.header}>Ứng dụng Ghi chú</Text>
+       
+        <Text style={[css.listEmployee, styles.colorPrimary]}>Danh sách Ghi chú</Text>
+
+        <ScrollView style={styles.items}>
+          { list?.map((item) => {
+            return (
+
+              <View style={css.rowBetween}>
+                <View key={item._id}  style={css.name}>
+                  <Text>{item.name}</Text>
+               
+                </View>
+
                 <View style={css.center}>
-                <TouchableOpacity onPress={() => handleDeleteTask(item._id)}>
-                  <Text style={css.delete}>Delete</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => handleEdit(item)}>
-                  <Text style={css.edit}>Edit</Text>
-                </TouchableOpacity>
+                  <TouchableOpacity onPress={() => handleDeleteTask(item._id)}>
+                    <Text style={css.delete}>Xóa</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => handleEdit(item)}>
+                    <Text style={css.edit}>Sửa</Text>
+                  </TouchableOpacity>
                 </View>
               </View>
             );
           })}
         </ScrollView>
+        <TouchableOpacity onPress={handleCreate} style={styles.header}>
+          <Text style={[css.center, css.khongbietnua]}>Tạo ghi chú</Text>
+        </TouchableOpacity>
       </View>
-     
+
     </View>
+
   );
+
 };
 export default App;
 const css = StyleSheet.create({
-  edit : {
-    color : "blue"
+  overview: {
+    marginTop: 20,
+    fontSize: 16,
+    fontWeight: '600'
   },
-  center : {
-    display : "flex",
-    gap : 10,
-    flexDirection : "row",
-    justifyContent : "center",
-    alignItems : "center",
-    alignContent : "center",
-    
+
+  center: {
+    display: "flex",
+    gap: 10,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignContent: "center",
+
+  },
+  khongbietnua: {
+    backgroundColor: '#3a86ff',
+    color: 'white',
+    marginBottom: 60,
+    marginTop: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 10
+
+  },
+  listEmployee: {
+    display: "flex",
+    justifyContent: "center",
+    textAlign: 'center',
+    alignItems: "center",
+    fontSize: 20,
+    marginTop: 15,
+    fontWeight: 'bold'
+  },
+  listEmployeeSize: {
+    fontSize: 15,
+    fontWeight: '600'
+  },
+  listEmployeeSize1: {
+    fontWeight: 'normal'
   },
   rowBetween: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingVertical : 10
+    alignItems: 'center',
+    paddingVertical: 10
   },
   delete: {
-    color: "red",
+    color: "white",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    backgroundColor: '#e63946',
+    borderRadius: 5
   },
-  TextInput : {
+  edit: {
+    color: "white",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    backgroundColor: '#3a86ff',
+    borderRadius: 5
+  },
+  name : {
+    width: 180,
+  },
+  TextInputa: {
     height: 44,
+    width: "100%",
+    backgroundColor: "white",
+    borderWidth: 1,
+    borderColor: "#21a3d0",
+    borderRadius: 10,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: "#080357",
+    marginTop: 30
+  },
+  TextInput: {
+    height: 250,
     width: "100%",
     backgroundColor: "white",
     borderWidth: 1,
@@ -273,9 +344,10 @@ const css = StyleSheet.create({
     borderRadius: 20,
     paddingHorizontal: 20,
     paddingVertical: 10,
-    padding : 10,
-    borderWidth : 1,
-    borderColor : "#888",
-    marginTop : 10
+    padding: 10,
+    borderWidth: 1,
+    borderColor: "#888",
+    marginTop: 10,
+     textAlignVertical: 'top',
   }
 });
